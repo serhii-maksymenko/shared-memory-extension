@@ -19,7 +19,7 @@ public:
     const char* name_ = NULL;
 
     int create(int size, const char* name) {
-        // we need to copy string which comes from Python because otherwise it will be released before destroy() call
+        // We need to copy string which comes from Python because otherwise it will be released before destroy() call
         char *temp_name = (char*)malloc(strlen(name));
         strcpy(temp_name, name);
         name_ = temp_name;
@@ -27,29 +27,23 @@ public:
         shm_fd_ = shm_open(name, O_CREAT | O_RDWR, 0666);
         if (shm_fd_ == -1) {
             PyErr_SetString(PyExc_RuntimeError, "Failed to open shared memory object");
-
             return 1;
         }
 
         // Set the size of the shared memory object
-        if (ftruncate(shm_fd_, size) == -1)
-        {
+        if (ftruncate(shm_fd_, size) == -1) {
             PyErr_SetString(PyExc_RuntimeError, "Failed to set shared memory object size");
-
             return 1;
         }
 
         // Map the shared memory into the process's address space
         shared_memory_ = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd_, 0);
-        if (shared_memory_ == MAP_FAILED)
-        {
+        if (shared_memory_ == MAP_FAILED) {
             PyErr_SetString(PyExc_RuntimeError, "Failed to map shared memory");
-
             return 1;
         }
 
         spdlog::info("Create `{}` shared memory of size {} bytes", name_, size_);
-
         return 0;
     }
 
@@ -81,7 +75,6 @@ public:
         spdlog::info("Write {} bytes to `{}` shared memory", size, name_);
         
         memcpy(shared_memory_, PyArray_DATA(image_array), size);
-
         return 0;
     }
 
@@ -94,18 +87,7 @@ public:
             return NULL;
         }
 
-        // Create a copy of the NumPy array to ensure data ownership
-        PyObject* array_copy = PyArray_Copy(reinterpret_cast<PyArrayObject*>(array_obj));
-        if (array_copy == NULL) {
-            PyErr_SetString(PyExc_RuntimeError, "Failed to create NumPy array copy");
-            Py_DECREF(array_obj);
-            return NULL;
-        }
-
-        // Clean up
-        Py_DECREF(array_obj);
-
-        return array_copy;
+        return array_obj;
     }
 } SharedMemory;
 
@@ -149,7 +131,6 @@ static PyObject* SharedMemory_write(SharedMemory* self, PyObject* args) {
 }
 
 static PyObject* SharedMemory_read(SharedMemory* self) {
-    spdlog::info("SharedMemory_read");
     return self->read();
 }
 
