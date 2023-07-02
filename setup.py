@@ -1,12 +1,13 @@
 from setuptools import setup, Extension
-import numpy
+import numpy as np
 
 module = Extension(
     'shared_memory_extension',
-    sources=['shared_memory_extension.cpp'],
-    include_dirs=[numpy.get_include()],
+    sources=['src/shared_memory_extension.cpp'],
+    include_dirs=[np.get_include()],
     extra_link_args=["-lrt"]
 )
+
 
 setup(
     name='shared_memory_extension',
